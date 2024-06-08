@@ -1,43 +1,43 @@
-mport speech_recognition as sr
+import speech_recognition as sr
 from gpiozero import LED
 from gpiozero.pins.rpigpio import RPiGPIOFactory
 from time import sleep
 
-# Use RPiGPIOFactory explicitly
-factory = RPiGPIOFactory()
-led = LED(17, pin_factory=factory)
+# Setup GPIO factory explicitly for controlling pins
+pin_factory = RPiGPIOFactory()
+led = LED(17, pin_factory=pin_factory)
 
-recognizer = sr.Recognizer()
+speech_recognizer = sr.Recognizer()
 
-def listen_for_commands(audio_file):
-    with sr.AudioFile(audio_file) as source:
-        audio = recognizer.record(source)
+def recognize_commands(audio_path):
+    with sr.AudioFile(audio_path) as source:
+        audio_data = speech_recognizer.record(source)
         try:
-            command = recognizer.recognize_sphinx(audio)
-            print(f"You said: {command}")
-            return command
+            detected_command = speech_recognizer.recognize_sphinx(audio_data)
+            print(f"Detected command: {detected_command}")
+            return detected_command
         except sr.UnknownValueError:
-            print("Sorry, I could not understand?")
+            print("Unable to understand the audio")
             return ""
-        except sr.RequestError as e:
-            print(f"Could not request results; {e}")
+        except sr.RequestError as error:
+            print(f"Error in request: {error}")
             return ""
 
-def control_led(command):
+def manage_led(command):
     if "on" in command.lower():
         led.on()
-        print("LED is on")
+        print("LED turned on")
     elif "off" in command.lower():
         led.off()
-        print("LED is off")
+        print("LED turned off")
 
-audio_file = "/home/archit27/Music/record_out.wav"
+audio_path = "/home/archit27/Music/record_out.wav"
 
 try:
     while True:
-        command = listen_for_commands(audio_file)
-        control_led(command)
-        sleep(10) 
+        command = recognize_commands(audio_path)
+        manage_led(command)
+        sleep(10)
 except KeyboardInterrupt:
-    print("Program stopped manually")
+    print("Program terminated by user")
     led.off()
